@@ -2,6 +2,8 @@ package org.example.capstone3.Model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -27,10 +29,17 @@ public class MaintenanceRequest {
     @Column(columnDefinition = "Double")
     private Double totalPrice;
 
+    @Column(columnDefinition = "varchar(15) not null")
+    private String expertName;
+
+    @Pattern(regexp = "^(Pending|Completed)$")
+    @NotEmpty(message = "varchar(10)")
+    @Column(columnDefinition = "varchar(10) default 'Pending'")
+    private String status;
+
     //Relations
 
-    @OneToOne
-    @MapsId
+    @ManyToOne
     @JsonIgnore
     private MaintenanceExpert expert;
 

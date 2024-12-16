@@ -50,8 +50,8 @@ public class Course {
     @JsonIgnore
     private Owner owner;  // The owner who provides the course
 
-//    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)
-//    private Set<Booking> bookings;  // set of bookings for this course
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)
+    private Set<Booking> bookings;  // set of bookings for this course
 
 
 

@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Set;
+
 @Setter
 @Getter
 @AllArgsConstructor
@@ -20,7 +22,7 @@ public class MaintenanceExpert {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(columnDefinition = "varchar(20) not null")
+    @Column(columnDefinition = "varchar(20) not null unique")
     @NotEmpty(message = "Empty name")
     private String name;
 
@@ -46,10 +48,10 @@ public class MaintenanceExpert {
     private String description;
 
 
+    /////Relations
+
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "expert")
+    private Set<MaintenanceRequest> maintenanceRequestSet;
 
 
-
-    @OneToOne(cascade = CascadeType.ALL)
-    @PrimaryKeyJoinColumn
-    private MaintenanceRequest maintenanceRequest;
 }

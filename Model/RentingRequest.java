@@ -37,6 +37,9 @@ public class RentingRequest {
     @Column(columnDefinition = "int")
     private Integer totalCost;
 
+    ////////
+
+
     @OneToOne
     @MapsId
     @JsonIgnore

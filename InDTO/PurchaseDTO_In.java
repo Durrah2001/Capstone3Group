@@ -12,8 +12,6 @@ public class PurchaseDTO_In {
 
     private Integer motorcycle_id;
 
-    @Column(columnDefinition = "date")
-    private LocalDate purchaseDate = LocalDate.now();
 
 
 }
