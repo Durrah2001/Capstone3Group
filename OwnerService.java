@@ -26,11 +26,11 @@ public class OwnerService {
         List<Owner> owners = ownerRepository.findAll();
 
         List<OwnerDTO> ownerDTOList = new ArrayList<>();
-        List<MotorcycleDTO> motorcycleDTOS = motorcycleService.getAllMotorcycles();
-        List<CourseDTO> courseDTOS = courseService.getAllCourses();
+        List<MotorcycleDTO> motorcycles = motorcycleService.getAllMotorcycles();
+        List<CourseDTO> courses = courseService.getAllCourses();
 
         for(Owner owner : owners){
-            OwnerDTO ownerDTO = new OwnerDTO(owner.getName(), owner.getEmail(), owner.getPhoneNumber(), owner.getAddress(),motorcycleDTOS, courseDTOS );
+            OwnerDTO ownerDTO = new OwnerDTO(owner.getName(), owner.getEmail(), owner.getPhoneNumber(), owner.getAddress(),motorcycles, courses );
             ownerDTOList.add(ownerDTO);
         }
         return ownerDTOList;
