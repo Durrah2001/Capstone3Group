@@ -19,45 +19,62 @@ public class EventService {
     private final EventRepository eventRepository;
     private final CompanyRepository companyRepository;
 
-
     public List<EventDTO> getEvents(){
         List<Event> events = eventRepository.findAll();
-        List<EventDTO> eventDTOS = new ArrayList<>();
+        List<EventDTO> eventOutDTOS = new ArrayList<>();
 
         for(Event event:events){
-            EventDTO eventDTO = new EventDTO(event.getName(),event.getLocation(),event.getDetails(),event.getDate());
-            eventDTOS.add(eventDTO);
+            EventDTO eventOutDTO = new EventDTO(event.getName(),event.getLocation(),event.getDetails(),event.getDate());
+            eventOutDTOS.add(eventOutDTO);
         }
-        return eventDTOS;
+        return eventOutDTOS;
     }
 
 
     public void addEvent(Integer companyId ,Event event){
         Company company = companyRepository.findCompanyById(companyId);
-        if(company== null){
-            throw new ApiException("Company not found");
+        if(company==null || !company.getIsApproved()){
+            throw new ApiException("Company can not add event");
         }
         event.setCompany(company);
         eventRepository.save(event);
     }
 
-    public void updateEvent(Integer id, Event event){
+    public void updateEvent(Integer id,Integer company_id, Event event){
         Event event1 = eventRepository.findEventById(id);
         if(event1==null){
             throw new ApiException("Event not found");
         }
-        event1.setDate(event.getDate());
-        event1.setDetails(event.getDetails());
-        event1.setName(event.getName());
-        event1.setLocation(event.getLocation());
+        Company company = companyRepository.findCompanyById(company_id);
+        if(company==null || !company.getIsApproved()){
+            throw new ApiException("Company not found");
+        }
+        if (event1.getCompany() == company) {
+            event1.setDate(event.getDate());
+            event1.setDetails(event.getDetails());
+            event1.setName(event.getName());
+            event1.setLocation(event.getLocation());
+            eventRepository.save(event1);
+        }
     }
 
 
-    public void deleteEvent(Integer id){
+    public void deleteEvent(Integer id,Integer company_id){
         Event event = eventRepository.findEventById(id);
         if(event ==null){
             throw new ApiException("Event not found");
         }
-        eventRepository.delete(event);
+        Company company = companyRepository.findCompanyById(company_id);
+        if(company==null){
+            throw new ApiException("Company not found");
+        }
+        if (event.getCompany() == company) {
+            eventRepository.delete(event);
+        }
     }
+
+
+
+
+
 }

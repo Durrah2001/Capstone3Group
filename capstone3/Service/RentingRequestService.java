@@ -3,7 +3,6 @@ package org.example.capstone3.Service;
 import lombok.RequiredArgsConstructor;
 import org.example.capstone3.ApiResponse.ApiException;
 import org.example.capstone3.InDTO.RentingRequestDTO_In;
-import org.example.capstone3.Model.Motorcycle;
 import org.example.capstone3.Model.Renting;
 import org.example.capstone3.Model.RentingRequest;
 import org.example.capstone3.Model.User;
@@ -38,6 +37,7 @@ public class RentingRequestService {
         }
         return rentingRequestOutDTOs;
     }
+
 
     public Integer addRentingRequest(RentingRequestDTO_In rentingRequestDTOIn) {
         // Step 1: Validate input dates
@@ -90,25 +90,55 @@ public class RentingRequestService {
     }
 
 
-    public void updateRentingRequest(Integer rentingRequest_id,RentingRequestDTO_In rentingRequestInDTO) {
-        Renting renting = rentingRepository.findRentingById(rentingRequestInDTO.getRenting_id());
-        if(renting == null) {
-            throw new ApiException("Renting not found");
+
+    public void updateRentingRequest(Integer rentingRequestId, RentingRequestDTO_In rentingRequestInDTO) {
+        // Step 1: Validate the RentingRequest exists
+        RentingRequest existingRentingRequest = rentingRequestRepository.findById(rentingRequestId)
+                .orElseThrow(() -> new ApiException("Renting Request not found"));
+
+        // Step 2: Validate the Renting offer exists
+        Renting renting = rentingRepository.findById(rentingRequestInDTO.getRenting_id())
+                .orElseThrow(() -> new ApiException("Renting not found"));
+
+        // Step 3: Validate the User exists
+        User user = userRepository.findById(rentingRequestInDTO.getUser_id())
+                .orElseThrow(() -> new ApiException("User not found"));
+
+        // Step 4: Validate input dates
+        if (rentingRequestInDTO.getStartDate().isAfter(rentingRequestInDTO.getEndDate())) {
+            throw new ApiException("Start date cannot be after end date!");
         }
-        RentingRequest rentingRequest = rentingRequestRepository.findRentingRequestById(rentingRequest_id);
-        if(rentingRequest == null) {
-            throw new ApiException("Renting Request not found");
+        if (rentingRequestInDTO.getStartDate().isBefore(LocalDate.now())) {
+            throw new ApiException("Start date must be today or in the future!");
         }
-        User user = userRepository.findUserById(rentingRequestInDTO.getUser_id());
-        if(user == null) {
-            throw new ApiException("User not found");
+
+        // Step 5: Check motorcycle availability (excluding current renting request)
+        boolean isRented = rentingRepository.existsByMotorcycleAndDateRangeExcludingRequest(
+                renting.getMotorcycle_id(),
+                rentingRequestInDTO.getStartDate(),
+                rentingRequestInDTO.getEndDate(),
+                rentingRequestId
+        );
+        if (isRented) {
+            throw new ApiException("The motorcycle is not available for the updated dates!");
         }
-        rentingRequest.setStartDate(rentingRequestInDTO.getStartDate());
-        rentingRequest.setEndDate(rentingRequestInDTO.getEndDate());
-        rentingRequest.setRenting(renting);
-        rentingRequest.setUser(user);
-        rentingRequestRepository.save(rentingRequest);
+
+        // Step 6: Update the RentingRequest
+        existingRentingRequest.setStartDate(rentingRequestInDTO.getStartDate());
+        existingRentingRequest.setEndDate(rentingRequestInDTO.getEndDate());
+        existingRentingRequest.setRenting(renting);
+        existingRentingRequest.setUser(user);
+        existingRentingRequest.setMotorcycle_id(rentingRequestInDTO.getMotorcycle_id());
+
+        // Step 7: Recalculate and update total cost
+        int totalCost = calculateTotalCost(renting.getPricePerDay(), rentingRequestInDTO.getStartDate(), rentingRequestInDTO.getEndDate());
+        existingRentingRequest.setTotalCost(totalCost);
+
+        // Save the updated RentingRequest
+        rentingRequestRepository.save(existingRentingRequest);
     }
+
+
 
     public void deleteRentingRequest(Integer rentingRequest_id) {
         // Step 1: Find the RentingRequest

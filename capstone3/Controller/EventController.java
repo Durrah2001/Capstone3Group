@@ -16,6 +16,7 @@ public class EventController {
 
     private final EventService eventService;
 
+
     @GetMapping("/get")
     public ResponseEntity getEvents(){
         return ResponseEntity.status(200).body(eventService.getEvents());
@@ -27,19 +28,18 @@ public class EventController {
         return ResponseEntity.status(200).body(new ApiResponse("Event added"));
     }
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity updateEvent(@PathVariable Integer id, @RequestBody @Valid Event event){
-        eventService.updateEvent(id,event);
+    @PutMapping("/update/{id}/{company_id}")
+    public ResponseEntity updateEvent(@PathVariable Integer id,@PathVariable Integer company_id, @RequestBody @Valid Event event){
+        eventService.updateEvent(id,company_id,event);
         return ResponseEntity.status(200).body(new ApiResponse("Event updated"));
     }
 
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity deleteEvent(@PathVariable Integer id){
-        eventService.deleteEvent(id);
+    @DeleteMapping("/delete/{id}/{company_id}")
+    public ResponseEntity deleteEvent(@PathVariable Integer id, @PathVariable Integer company_id){
+        eventService.deleteEvent(id,company_id);
         return ResponseEntity.status(200).body(new ApiResponse("Event deleted"));
 
     }
-
 
 
 

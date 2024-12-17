@@ -11,6 +11,7 @@ import org.example.capstone3.Repository.CourseRepository;
 import org.example.capstone3.Repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,7 +20,7 @@ import java.util.List;
 public class BookingCourseService {
 
     private final BookingCourseRepository bookingCourseRepository;
-    private final UserRepository UserRepository;
+    private final UserRepository userRepository;
     private final CourseRepository courseRepository;
 
     public List<BookingCourseDTO> getAllBookingCourses() {
@@ -31,23 +32,65 @@ public class BookingCourseService {
         return bookingCourseOutDTOs;
     }
 
-    public void addBookingCourse(Integer user_id,Integer course_id, BookingCourse bookingCourse) {
-        User user = UserRepository.findUserById(user_id);
-        Course course = courseRepository.findCourseById(course_id);
+    public String bookingCourse(Integer userId, Integer courseId,BookingCourse bookingCourse) {
+        // Step 1: Validate course existence
+        Course course = courseRepository.findCourseById(courseId);
+        if(course==null){ throw new ApiException("Course not found!");}
+
+        // Step 2: Check trainer availability
+        boolean isUnavailable = bookingCourseRepository.isTrainerUnavailable(
+                course.getOwner().getId(),
+                bookingCourse.getCourseStartDate(),
+                bookingCourse.getCourseEndDate()
+        );
+
+        if (isUnavailable) {
+            return "Trainer is not available during the requested dates!";
+        }
+
+        // Step 3: Fetch user
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException("User not found!"));
+
+        // Step 4: Create and save booking
         bookingCourse.setUser(user);
         bookingCourse.setCourse(course);
+        bookingCourse.setBookingDate(LocalDate.now());
+
         bookingCourseRepository.save(bookingCourse);
+
+        return "Course booked successfully!";
+    }
+    public void updateBookingCourse(Integer bookingCourseId, BookingCourse bookingCourse) {
+        // Step 1: Validate existing booking
+        BookingCourse existingBooking = bookingCourseRepository.findById(bookingCourseId)
+                .orElseThrow(() -> new ApiException("Booking course not found"));
+
+        // Step 2: Validate course existence
+        Course course = existingBooking.getCourse();
+        if (course == null) {
+            throw new ApiException("Associated course not found");
+        }
+
+        // Step 3: Check trainer availability
+        boolean isUnavailable = bookingCourseRepository.isTrainerUnavailable(
+                course.getOwner().getId(),
+                bookingCourse.getCourseStartDate(),
+                bookingCourse.getCourseEndDate()
+        );
+
+        if (isUnavailable) {
+            throw new ApiException("Trainer is not available during the updated dates!");
+        }
+
+        // Step 4: Update booking details
+        existingBooking.setCourseStartDate(bookingCourse.getCourseStartDate());
+        existingBooking.setCourseEndDate(bookingCourse.getCourseEndDate());
+
+        // Save updated booking
+        bookingCourseRepository.save(existingBooking);
     }
 
-    public void updateBookingCourse(Integer bookingCourse_id, BookingCourse bookingCourse) {
-        BookingCourse bookingCourse1 = bookingCourseRepository.findBookingCourseById(bookingCourse_id);
-        if (bookingCourse1 == null) {
-            throw new ApiException("Booking course not found");
-        }
-        bookingCourse1.setCourseStartDate(bookingCourse.getCourseStartDate());
-        bookingCourse1.setCourseEndDate(bookingCourse.getCourseEndDate());
-        bookingCourseRepository.save(bookingCourse1);
-    }
 
     public void deleteBookingCourse(Integer bookingCourse_id) {
         BookingCourse bookingCourse1 = bookingCourseRepository.findBookingCourseById(bookingCourse_id);
@@ -56,6 +99,5 @@ public class BookingCourseService {
         }
         bookingCourseRepository.delete(bookingCourse1);
     }
-
 
 }
